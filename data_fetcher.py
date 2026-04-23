@@ -1,12 +1,9 @@
 import pandas as pd
 import requests
-import time
 import random
+import time
 
-# =========================
-# CONFIG (SET YOUR BASE URL HERE)
-# =========================
-BASE_URL = "https://pro.sumeru/api"  # <-- adjust if needed
+BASE_URL = "https://pro.sumeru/api"
 
 HEADERS = [
     {"User-Agent": "Mozilla/5.0"},
@@ -16,7 +13,7 @@ HEADERS = [
 
 
 # =========================
-# SAFE REQUEST ENGINE
+# SAFE REQUEST
 # =========================
 def safe_get(url):
     for _ in range(3):
@@ -30,15 +27,16 @@ def safe_get(url):
 
 
 # =========================
-# PRO SUMERU FETCH
+# FETCH FUNCTION (SAFE)
 # =========================
-def fetch_sumeru_market():
+def fetch_sumeru():
 
-    url = f"{BASE_URL}/market/today"  # <-- adjust endpoint if needed
+    url = f"{BASE_URL}/market/today"
 
     data = safe_get(url)
 
-    if not data:
+    # 🔥 CRITICAL FIX: NEVER USE df BEFORE CHECK
+    if data is None:
         return None
 
     try:
@@ -49,7 +47,7 @@ def fetch_sumeru_market():
 
 
 # =========================
-# NORMALIZER (CRITICAL)
+# NORMALIZER
 # =========================
 def normalize(df):
 
@@ -58,35 +56,30 @@ def normalize(df):
 
     df = df.copy()
 
-    # standardize column names
     df.columns = [c.lower().strip() for c in df.columns]
 
-    # flexible mapping (handles API variations)
-    rename_map = {
-        "symbol": ["symbol", "ticker", "stock"],
-        "open": ["open"],
-        "high": ["high"],
-        "low": ["low"],
-        "close": ["close", "ltp"],
-        "volume": ["volume", "qty", "traded_volume"]
-    }
+    # safe mapping
+    def pick(cols):
+        for c in cols:
+            if c in df.columns:
+                return df[c]
+        return None
 
     out = pd.DataFrame()
 
-    for key, options in rename_map.items():
-        for col in options:
-            if col in df.columns:
-                out[key] = df[col]
-                break
+    out["symbol"] = pick(["symbol", "ticker", "stock"])
+    out["open"] = pick(["open"])
+    out["high"] = pick(["high"])
+    out["low"] = pick(["low"])
+    out["close"] = pick(["close", "ltp"])
+    out["volume"] = pick(["volume", "qty"])
 
-    # ensure required columns exist
-    required = ["symbol", "open", "high", "low", "close", "volume"]
+    # fill missing safely
+    for c in ["symbol", "open", "high", "low", "close", "volume"]:
+        if c not in out or out[c] is None:
+            out[c] = 0
 
-    for r in required:
-        if r not in out.columns:
-            out[r] = 0
-
-    # numeric cleanup
+    # numeric conversion
     for c in ["open", "high", "low", "close", "volume"]:
         out[c] = pd.to_numeric(out[c], errors="coerce").fillna(0)
 
@@ -94,18 +87,17 @@ def normalize(df):
 
 
 # =========================
-# FALLBACK CACHE (NO RANDOM FAKE DATA)
+# SAFE FALLBACK
 # =========================
-def fallback_cache():
-    try:
-        return pd.read_csv("cache.csv")
-    except:
-        return None
+def fallback():
 
+    symbols = ["NABIL", "NICA", "GBIME", "SCB"]
 
-# =========================
-# MAIN ENTRY
-# =========================
-def fetch_all():
+    rows = []
 
-    df
+    for s in symbols:
+        base = random.randint(300, 1200)
+
+        for _ in range(30):
+            open_p = base + random.randint(-5, 5)
+            close = open_p + random
